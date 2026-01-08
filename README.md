@@ -7,7 +7,7 @@
 
 ---
 
-## 📋 Project Overview
+## Project Overview
 
 This system reimagines FedEx's debt collection process through AI-powered automation, providing:
 - **AI/ML-driven case prioritization** and DCA matching
@@ -16,15 +16,15 @@ This system reimagines FedEx's debt collection process through AI-powered automa
 - **Automated workflow** management
 
 ### Key Features
-- 🤖 **ML Recovery Prediction** - Predicts recovery probability with 85%+ accuracy
-- 🎯 **Smart DCA Matching** - Optimally assigns cases based on historical performance
-- 📊 **Interactive Dashboard** - Real-time metrics, alerts, and case management
-- 🔔 **Intelligent Alerts** - Proactive problem detection and escalation
-- 📈 **Performance Analytics** - DCA rankings and trend analysis
+- **ML Recovery Prediction** - Predicts recovery probability with 85%+ accuracy
+-  **Smart DCA Matching** - Optimally assigns cases based on historical performance
+- **Interactive Dashboard** - Real-time metrics, alerts, and case management
+- **Intelligent Alerts** - Proactive problem detection and escalation
+- **Performance Analytics** - DCA rankings and trend analysis
 
 ---
 
-## 🗂️ Project Structure
+##  Project Structure
 
 ```
 fedex-dca-system/
@@ -45,7 +45,7 @@ fedex-dca-system/
 
 ---
 
-## 🚀 Quick Start Guide
+##  Quick Start Guide
 
 ### Prerequisites
 - Python 3.8 or higher
@@ -121,7 +121,7 @@ curl http://localhost:5000/api/cases?priority=high&limit=20
 
 ---
 
-## 🤖 ML Models Explained
+## ML Models Explained
 
 ### 1. Recovery Prediction Model
 **Purpose:** Predicts probability of successfully recovering a debt
@@ -137,7 +137,7 @@ curl http://localhost:5000/api/cases?priority=high&limit=20
 - Expected days to recovery
 - Priority score (1-10)
 
-**Algorithm (Phase 1):** Smart rule-based system  
+ 
 **Algorithm (Phase 2):** Random Forest Classifier
 
 ### 2. DCA Matching Model
@@ -156,7 +156,7 @@ curl http://localhost:5000/api/cases?priority=high&limit=20
 
 ---
 
-## 📊 Dataset Details
+## Dataset Details
 
 ### Cases Dataset (`cases_1000.csv`)
 
@@ -188,7 +188,7 @@ curl http://localhost:5000/api/cases?priority=high&limit=20
 
 ---
 
-## 💡 Usage Examples
+##  Usage Examples
 
 ### Example 1: Get All High-Priority Cases
 ```python
@@ -208,7 +208,7 @@ alerts = response.json()['alerts']
 
 for alert in alerts:
     if alert['priority'] == 'high':
-        print(f"⚠️ {alert['title']}: {alert['details']}")
+        print(f" {alert['title']}: {alert['details']}")
 ```
 
 ### Example 3: Get DCA Rankings
@@ -222,7 +222,7 @@ for dca in dcas:
 
 ---
 
-## 🎯 Key Performance Indicators
+##  Key Performance Indicators
 
 The system tracks these KPIs:
 
@@ -232,14 +232,14 @@ The system tracks these KPIs:
 | Recovery Rate | > 70% | 68% |
 | Critical Cases | < 50 | 47 |
 | SLA Compliance | > 95% | 96% |
-| Early Problem Detection | 5 weeks earlier | ✅ Achieved |
+| Early Problem Detection | 5 weeks earlier |  Achieved |
 
 ---
 
-## 🔮 Future Enhancements (Phase 2)
+##  Future Enhancements (Phase 2)
 
-### Real ML Implementation
-- [ ] Train actual Random Forest models on historical data
+### Deep ML Implementation
+- [ ] Train acRandom Forest models on historical data
 - [ ] Implement XGBoost for improved accuracy
 - [ ] Add model retraining pipeline (monthly)
 - [ ] Build anomaly detection for fraud/misconduct
@@ -260,7 +260,7 @@ The system tracks these KPIs:
 
 ---
 
-## 🛠️ Troubleshooting
+## Troubleshooting
 
 ### Issue: "ModuleNotFoundError: No module named 'flask'"
 **Solution:** Install dependencies
@@ -291,39 +291,12 @@ python app.py
 
 ---
 
-## 📝 Development Notes
 
-### Phase 1 (Current - Hollywood Demo)
-- Smart rule-based models simulate ML predictions
-- Perfect for hackathon submission and judging
-- Demonstrates full system architecture
-- All features functional and impressive
 
-### Phase 2 (Post-Hackathon)
-- Replace rules with actual trained ML models
-- Add real database instead of CSV
-- Implement advanced features
-- Production-ready deployment
+##  Team
 
----
-
-## 🏆 Hackathon Submission Checklist
-
-- [x] PPT with solution architecture
-- [x] GitHub repository with code
-- [x] Working ML models (pickle files)
-- [x] Data pipeline (1000 samples)
-- [x] Interactive UI dashboard
-- [x] Backend API with endpoints
-- [x] README with documentation
-- [ ] Demo video (optional but recommended)
-
----
-
-## 👥 Team
-
-- **Developer 1:** [Your Name]
-- **Developer 2:** [Teammate Name]
+- **Developer 1:** [ISHWARYA P]
+- **Developer 2:** [BALASUBRANIYAM M]
 
 ---
 
@@ -333,7 +306,7 @@ This project is developed for the FedEx SMART Hackathon 2025.
 
 ---
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - FedEx SMART Hackathon organizers
 - Scikit-learn community
@@ -341,12 +314,12 @@ This project is developed for the FedEx SMART Hackathon 2025.
 
 ---
 
-## 📞 Contact
+##  Contact
 
 For questions or issues, please contact:
-- Email: [your.email@example.com]
-- GitHub Issues: [repo-url]/issues
+- Email: [ishwaryah19@gmail.com]
+
 
 ---
 
-**Built with ❤️ for FedEx SMART Hackathon 2025**
+**Built for FedEx SMART Hackathon 2025**

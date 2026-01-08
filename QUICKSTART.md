@@ -1,12 +1,12 @@
-# 🚀 QUICK START GUIDE
+# QUICK START GUIDE
 ## FedEx DCA Management System - Jan 9 Submission
 
-### ⚡ 5-Minute Setup (Windows/Mac/Linux)
+###  5-Minute Setup (Windows/Mac/Linux)
 
 **Step 1: Install Python (if not installed)**
 - Download from: https://www.python.org/downloads/
 - Version: 3.8 or higher
-- ✅ Check: `python --version` in terminal
+- Check: `python --version` in terminal
 
 **Step 2: Open Terminal/Command Prompt**
 - **Windows**: Press `Win + R`, type `cmd`, press Enter
@@ -36,8 +36,8 @@ ls models/dca_matcher.pkl
 ```bash
 python app.py
 ```
-✅ You should see: "Running on http://localhost:5000"
-⚠️ **KEEP THIS TERMINAL OPEN!**
+ You should see: "Running on http://localhost:5000"
+**KEEP THIS TERMINAL OPEN!**
 
 **Step 7: Open Dashboard**
 - Open `dashboard.html` in your browser (Chrome, Firefox, Safari, Edge)
@@ -50,46 +50,35 @@ python app.py
 - Click "High Priority" filter button
 - Everything should work smoothly!
 
----
 
-## 🎬 Demo for Judges
 
-### What to Show:
-
-**1. Live Dashboard (30 seconds)**
+**1. Live Dashboard 
 - "This is our real-time DCA management dashboard"
 - Point to the 4 key metrics at top
 - "Everything you see is powered by our ML models"
 
-**2. Critical Alerts (15 seconds)**
+**2. Critical Alerts 
 - "The system automatically flags problems"
 - Point to the red alerts
 - "Managers know immediately what needs attention"
 
-**3. ML Predictions (30 seconds)**
+**3. ML Predictions 
 - Click on a case in the table
 - "Each case has AI-predicted recovery probability"
 - "The system recommends the optimal DCA"
 - Show priority scores
 
-**4. DCA Performance (15 seconds)**
+**4. DCA Performance 
 - Point to the leaderboard
 - "We rank DCAs objectively based on data"
 - "This drives better contracts and accountability"
 
-**5. Code & Models (30 seconds)**
-- Open `train_model.py` in a code editor
-- "Here's our ML prediction logic"
-- Open `models/` folder
-- "These are the trained model files"
-- Open `data/cases_1000.csv` in Excel
-- "1000 realistic case samples"
 
-**Total: 2 minutes**
+
 
 ---
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Dashboard Shows "Loading..." Forever
 
@@ -117,7 +106,7 @@ python app.py
 
 - **1000 case samples** in dataset
 - **74.3% model accuracy** (Phase 1)
-- **Target: 85%+** (Phase 2 with real Random Forest)
+- **Target: 85%+** (Phase 2 with Random Forest)
 - **5 different DCAs** with performance tracking
 - **4 priority levels** (Low, Medium, High, Critical)
 - **7 API endpoints** serving data
@@ -125,19 +114,6 @@ python app.py
 
 ---
 
-## 💡 Phase 2 Upgrade Path (After Jan 9)
-
-### What Changes:
-
-**From:** Rule-based "smart" predictions  
-**To:** Actual trained Random Forest models
-
-**How:**
-
-1. Replace `RecoveryPredictor` class with sklearn RandomForestClassifier
-2. Train on historical data instead of using rules
-3. Add hyperparameter tuning (GridSearchCV)
-4. Implement model retraining pipeline
 
 **Code Example (Phase 2):**
 ```python
@@ -167,18 +143,6 @@ with open('models/recovery_model.pkl', 'wb') as f:
 
 ---
 
-## ✅ GitHub Repository Checklist
-
-Before pushing to GitHub:
-
-- [ ] All 7 files present
-- [ ] data/cases_1000.csv generated
-- [ ] models/*.pkl files created
-- [ ] requirements.txt complete
-- [ ] README.md professional
-- [ ] .gitignore configured
-- [ ] Test locally (run app.py + open dashboard)
-- [ ] Screenshots for README (optional)
 
 **Git Commands:**
 ```bash
@@ -191,38 +155,8 @@ git push -u origin main
 
 ---
 
-## 🎯 Winning Strategy
 
-### What Judges Want to See:
-
-1. ✅ **Working Demo** - You have this!
-2. ✅ **Real Code** - Not just slides
-3. ✅ **ML Models** - Pickle files prove it
-4. ✅ **Data Pipeline** - 1000 samples
-5. ✅ **Business Value** - Clear ROI
-6. ✅ **Technical Depth** - API, models, dashboard
-7. ✅ **Scalability** - Ready for Phase 2
-
-### Your Edge:
-
-Most teams will submit PowerPoints with mockups.  
-**You have an ACTUAL WORKING SYSTEM.**
-
-That's your competitive advantage!
 
 ---
 
-## 📞 Last-Minute Help
 
-If something breaks on Jan 9:
-
-1. **Don't panic** - The system is well-built
-2. **Check the troubleshooting section** above
-3. **Demo the working parts** - Even if one thing fails, show what works
-4. **Explain Phase 2** - Judges love hearing about future plans
-
----
-
-**Good luck with your submission! 🍀**
-
-You've built something impressive. Trust the system!

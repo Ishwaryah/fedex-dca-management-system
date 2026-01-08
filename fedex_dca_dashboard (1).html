@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FedEx DCA Management Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: #4E2A84;
+            --secondary: #FF6600;
+            --success: #00A651;
+            --warning: #FFB81C;
+            --danger: #E31837;
+            --dark: #1A1A2E;
+            --light: #F8F9FA;
+            --gray: #6C757D;
+            --gradient-start: #4E2A84;
+            --gradient-end: #8B4789;
+        }
+        
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: linear-gradient(135deg, #0F0F1E 0%, #1A1A2E 100%);
+            color: #E0E0E0;
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(78, 42, 132, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255, 102, 0, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+        
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding: 25px 30px;
+            background: rgba(26, 26, 46, 0.8);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .logo {
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -1px;
+        }
+        
+        .subtitle {
+            font-size: 14px;
+            color: var(--gray);
+            font-weight: 300;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .refresh-btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-family: 'Outfit', sans-serif;
+        }
+        
+        .refresh-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(78, 42, 132, 0.4);
+        }
+        
+        .timestamp {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--gray);
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+        }
+        
+        /* War Room - Top Metrics */
+        .war-room {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .metric-card {
+            background: rgba(26, 26, 46, 0.6);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--accent);
+            transition: width 0.3s;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+        }
+        
+        .metric-card:hover::before {
+            width: 8px;
+        }
+        
+        .metric-card.outstanding { --accent: var(--secondary); }
+        .metric-card.critical { --accent: var(--danger); }
+        .metric-card.recovered { --accent: var(--success); }
+        .metric-card.rate { --accent: var(--warning); }
+        
+        .metric-label {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--gray);
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+        
+        .metric-value {
+            font-size: 42px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 8px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        
+        .metric-change {
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .metric-change.positive { color: var(--success); }
+        .metric-change.negative { color: var(--danger); }
+        
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .panel {
+            background: rgba(26, 26, 46, 0.6);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+        
+        .panel-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: white;
+        }
+        
+        .view-all {
+            color: var(--secondary);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            transition: color 0.2s;
+        }
+        
+        .view-all:hover {
+            color: var(--primary);
+        }
+        
+        /* Alerts */
+        .alert-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .alert-item {
+            padding: 18px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            border-left: 4px solid var(--alert-color);
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        
+        .alert-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateX(5px);
+        }
+        
+        .alert-item.high { --alert-color: var(--danger); }
+        .alert-item.medium { --alert-color: var(--warning); }
+        .alert-item.low { --alert-color: var(--success); }
+        
+        .alert-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        
+        .alert-title {
+            font-weight: 600;
+            font-size: 14px;
+            color: white;
+        }
+        
+        .alert-time {
+            font-size: 12px;
+            color: var(--gray);
+            font-family: 'JetBrains Mono', monospace;
+        }
+        
+        .alert-details {
+            font-size: 13px;
+            color: var(--gray);
+        }
+        
+        /* DCA Leaderboard */
+        .dca-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .dca-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 18px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            transition: all 0.2s;
+        }
+        
+        .dca-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: scale(1.02);
+        }
+        
+        .dca-rank {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--rank-color);
+            width: 40px;
+            text-align: center;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        
+        .dca-item:nth-child(1) { --rank-color: #FFD700; }
+        .dca-item:nth-child(2) { --rank-color: #C0C0C0; }
+        .dca-item:nth-child(3) { --rank-color: #CD7F32; }
+        .dca-item:nth-child(n+4) { --rank-color: var(--gray); }
+        
+        .dca-info {
+            flex: 1;
+        }
+        
+        .dca-name {
+            font-weight: 600;
+            color: white;
+            margin-bottom: 4px;
+        }
+        
+        .dca-stats {
+            font-size: 12px;
+            color: var(--gray);
+        }
+        
+        .dca-score {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--success);
+            font-family: 'JetBrains Mono', monospace;
+        }
+        
+        /* Charts */
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 20px;
+        }
+        
+        /* Case Table */
+        .case-controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .search-box {
+            flex: 1;
+            min-width: 250px;
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: white;
+            font-family: 'Outfit', sans-serif;
+            font-size: 14px;
+        }
+        
+        .search-box::placeholder {
+            color: var(--gray);
+        }
+        
+        .filter-btn {
+            padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Outfit', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .filter-btn:hover, .filter-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+        
+        .case-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .case-table thead {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .case-table th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--gray);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .case-table td {
+            padding: 18px 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 14px;
+        }
+        
+        .case-table tbody tr {
+            transition: background 0.2s;
+            cursor: pointer;
+        }
+        
+        .case-table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .status-badge.active { background: rgba(0, 166, 81, 0.2); color: var(--success); }
+        .status-badge.promised { background: rgba(255, 184, 28, 0.2); color: var(--warning); }
+        .status-badge.stalled { background: rgba(227, 24, 55, 0.2); color: var(--danger); }
+        .status-badge.disputed { background: rgba(108, 117, 125, 0.2); color: var(--gray); }
+        
+        .priority-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+        }
+        
+        .priority-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--priority-color);
+        }
+        
+        .priority-badge.high { --priority-color: var(--danger); color: var(--danger); }
+        .priority-badge.medium { --priority-color: var(--warning); color: var(--warning); }
+        .priority-badge.low { --priority-color: var(--success); color: var(--success); }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        /* Animations */
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .metric-card, .panel, .alert-item, .dca-item {
+            animation: slideIn 0.5s ease-out forwards;
+        }
+        
+        .metric-card:nth-child(1) { animation-delay: 0.1s; }
+        .metric-card:nth-child(2) { animation-delay: 0.2s; }
+        .metric-card:nth-child(3) { animation-delay: 0.3s; }
+        .metric-card:nth-child(4) { animation-delay: 0.4s; }
+        
+        @media (max-width: 1200px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .war-room {
+                grid-template-columns: 1fr;
+            }
+            
+            header {
+                flex-direction: column;
+                gap: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo-section">
+                <div class="logo">FedEx DCA Control</div>
+                <div class="subtitle">Intelligent Debt Collection Management</div>
+            </div>
+            <div class="header-actions">
+                <div class="timestamp" id="timestamp">Last updated: --:--:--</div>
+                <button class="refresh-btn" onclick="refreshDashboard()">↻ Refresh Data</button>
+            </div>
+        </header>
+        
+        <!-- War Room Metrics -->
+        <div class="war-room">
+            <div class="metric-card outstanding">
+                <div class="metric-label">Total Outstanding</div>
+                <div class="metric-value">$12.4M</div>
+                <div class="metric-change negative">↓ 8.2% from last month</div>
+            </div>
+            
+            <div class="metric-card critical">
+                <div class="metric-label">Critical Cases</div>
+                <div class="metric-value">47</div>
+                <div class="metric-change negative">↑ 12 cases require action</div>
+            </div>
+            
+            <div class="metric-card recovered">
+                <div class="metric-label">This Month Recovery</div>
+                <div class="metric-value">$2.8M</div>
+                <div class="metric-change positive">↑ 34.5% vs last month</div>
+            </div>
+            
+            <div class="metric-card rate">
+                <div class="metric-label">Recovery Rate</div>
+                <div class="metric-value">68%</div>
+                <div class="metric-change positive">↑ 14% improvement</div>
+            </div>
+        </div>
+        
+        <!-- Dashboard Grid -->
+        <div class="dashboard-grid">
+            <!-- Alerts Panel -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">🔥 Critical Alerts</h2>
+                    <a href="#" class="view-all">View All →</a>
+                </div>
+                <div class="alert-list" id="alertList">
+                    <!-- Alerts will be populated by JavaScript -->
+                </div>
+            </div>
+            
+            <!-- DCA Leaderboard -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">🏆 DCA Performance</h2>
+                    <a href="#" class="view-all">Details →</a>
+                </div>
+                <div class="dca-list" id="dcaList">
+                    <!-- DCA rankings will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Charts Row -->
+        <div class="dashboard-grid">
+            <div class="panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">📊 Case Distribution</h2>
+                </div>
+                <div class="chart-container">
+                    <canvas id="caseDistributionChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">📈 Recovery Trend (30 Days)</h2>
+                </div>
+                <div class="chart-container">
+                    <canvas id="recoveryTrendChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Case Management Table -->
+        <div class="panel">
+            <div class="panel-header">
+                <h2 class="panel-title">📋 Active Cases</h2>
+                <span class="view-all">1,000 total cases</span>
+            </div>
+            
+            <div class="case-controls">
+                <input type="text" class="search-box" placeholder="🔍 Search by customer, case ID, or DCA..." id="searchBox">
+                <button class="filter-btn active" onclick="filterCases('all')">All</button>
+                <button class="filter-btn" onclick="filterCases('high')">High Priority</button>
+                <button class="filter-btn" onclick="filterCases('stalled')">Stalled</button>
+                <button class="filter-btn" onclick="filterCases('critical')">Critical</button>
+            </div>
+            
+            <table class="case-table">
+                <thead>
+                    <tr>
+                        <th>Case ID</th>
+                        <th>Customer</th>
+                        <th>Amount</th>
+                        <th>Days Overdue</th>
+                        <th>DCA</th>
+                        <th>Priority</th>
+                        <th>Status</th>
+                        <th>Last Contact</th>
+                    </tr>
+                </thead>
+                <tbody id="caseTableBody">
+                    <!-- Cases will be populated by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <script>
+        // Sample Data
+        const alerts = [
+            {
+                priority: 'high',
+                title: 'High-Value Case Stalled',
+                details: 'Case #DCA-2847 ($85,000) - No contact in 14 days by DCA-Omega',
+                time: '8 mins ago'
+            },
+            {
+                priority: 'high',
+                title: 'SLA Breach Imminent',
+                details: 'Case #DCA-2891 approaching 90-day threshold (currently 87 days)',
+                time: '23 mins ago'
+            },
+            {
+                priority: 'medium',
+                title: 'Payment Promise Missed',
+                details: 'Customer #C-4582 missed promised payment of $42,000',
+                time: '1 hour ago'
+            },
+            {
+                priority: 'high',
+                title: 'DCA Performance Drop',
+                details: 'DCA-Beta recovery rate dropped to 42% (target: 65%)',
+                time: '2 hours ago'
+            },
+            {
+                priority: 'medium',
+                title: 'Multiple Contact Failures',
+                details: '8 cases with DCA-Gamma showing "customer unavailable" pattern',
+                time: '3 hours ago'
+            }
+        ];
+        
+        const dcas = [
+            {
+                rank: 1,
+                name: 'DCA-Alpha',
+                score: '92%',
+                stats: '156 cases • Avg 18 days • $3.2M recovered'
+            },
+            {
+                rank: 2,
+                name: 'DCA-Omega',
+                score: '87%',
+                stats: '203 cases • Avg 22 days • $4.1M recovered'
+            },
+            {
+                rank: 3,
+                name: 'DCA-Prime',
+                score: '79%',
+                stats: '178 cases • Avg 28 days • $2.8M recovered'
+            },
+            {
+                rank: 4,
+                name: 'DCA-Beta',
+                score: '71%',
+                stats: '189 cases • Avg 35 days • $2.3M recovered'
+            },
+            {
+                rank: 5,
+                name: 'DCA-Gamma',
+                score: '65%',
+                stats: '274 cases • Avg 42 days • $3.1M recovered'
+            }
+        ];
+        
+        const cases = [
+            { id: 'DCA-2847', customer: 'TechCorp Industries', amount: '$85,000', days: 87, dca: 'DCA-Omega', priority: 'high', status: 'stalled', lastContact: '14 days ago' },
+            { id: 'DCA-2891', customer: 'Global Logistics Inc', amount: '$62,500', days: 87, dca: 'DCA-Alpha', priority: 'high', status: 'active', lastContact: '2 days ago' },
+            { id: 'DCA-3012', customer: 'Retail Solutions LLC', amount: '$47,200', days: 45, dca: 'DCA-Prime', priority: 'medium', status: 'promised', lastContact: '1 day ago' },
+            { id: 'DCA-2765', customer: 'Manufacturing Co', amount: '$128,000', days: 102, dca: 'DCA-Omega', priority: 'high', status: 'disputed', lastContact: '5 days ago' },
+            { id: 'DCA-2934', customer: 'Express Shipping Ltd', amount: '$34,800', days: 67, dca: 'DCA-Beta', priority: 'medium', status: 'active', lastContact: '3 days ago' },
+            { id: 'DCA-3145', customer: 'Supply Chain Partners', amount: '$91,300', days: 93, dca: 'DCA-Gamma', priority: 'high', status: 'stalled', lastContact: '18 days ago' },
+            { id: 'DCA-2678', customer: 'Transport Systems Inc', amount: '$23,500', days: 34, dca: 'DCA-Alpha', priority: 'low', status: 'active', lastContact: '1 day ago' },
+            { id: 'DCA-3089', customer: 'Distribution Networks', amount: '$156,000', days: 78, dca: 'DCA-Prime', priority: 'high', status: 'active', lastContact: '4 days ago' },
+            { id: 'DCA-2812', customer: 'Freight Solutions', amount: '$41,200', days: 56, dca: 'DCA-Beta', priority: 'medium', status: 'promised', lastContact: '2 days ago' },
+            { id: 'DCA-2956', customer: 'Warehouse Co', amount: '$19,800', days: 23, dca: 'DCA-Gamma', priority: 'low', status: 'active', lastContact: '1 day ago' }
+        ];
+        
+        // Populate Alerts
+        function populateAlerts() {
+            const alertList = document.getElementById('alertList');
+            alertList.innerHTML = alerts.map(alert => `
+                <div class="alert-item ${alert.priority}">
+                    <div class="alert-header">
+                        <span class="alert-title">${alert.title}</span>
+                        <span class="alert-time">${alert.time}</span>
+                    </div>
+                    <div class="alert-details">${alert.details}</div>
+                </div>
+            `).join('');
+        }
+        
+        // Populate DCA Leaderboard
+        function populateDCAs() {
+            const dcaList = document.getElementById('dcaList');
+            dcaList.innerHTML = dcas.map(dca => `
+                <div class="dca-item">
+                    <div class="dca-rank">#${dca.rank}</div>
+                    <div class="dca-info">
+                        <div class="dca-name">${dca.name}</div>
+                        <div class="dca-stats">${dca.stats}</div>
+                    </div>
+                    <div class="dca-score">${dca.score}</div>
+                </div>
+            `).join('');
+        }
+        
+        // Populate Case Table
+        function populateCases(filteredCases = cases) {
+            const tbody = document.getElementById('caseTableBody');
+            tbody.innerHTML = filteredCases.map(c => `
+                <tr>
+                    <td><strong>${c.id}</strong></td>
+                    <td>${c.customer}</td>
+                    <td><strong>${c.amount}</strong></td>
+                    <td>${c.days}</td>
+                    <td>${c.dca}</td>
+                    <td>
+                        <span class="priority-badge ${c.priority}">
+                            <span class="priority-dot"></span>
+                            ${c.priority.toUpperCase()}
+                        </span>
+                    </td>
+                    <td><span class="status-badge ${c.status}">${c.status}</span></td>
+                    <td>${c.lastContact}</td>
+                </tr>
+            `).join('');
+        }
+        
+        // Filter Cases
+        function filterCases(filter) {
+            const buttons = document.querySelectorAll('.filter-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            let filtered = cases;
+            if (filter === 'high') {
+                filtered = cases.filter(c => c.priority === 'high');
+            } else if (filter === 'stalled') {
+                filtered = cases.filter(c => c.status === 'stalled');
+            } else if (filter === 'critical') {
+                filtered = cases.filter(c => c.days > 80);
+            }
+            
+            populateCases(filtered);
+        }
+        
+        // Search Functionality
+        document.getElementById('searchBox').addEventListener('input', (e) => {
+            const search = e.target.value.toLowerCase();
+            const filtered = cases.filter(c => 
+                c.id.toLowerCase().includes(search) ||
+                c.customer.toLowerCase().includes(search) ||
+                c.dca.toLowerCase().includes(search)
+            );
+            populateCases(filtered);
+        });
+        
+        // Create Charts
+        function createCharts() {
+            // Case Distribution Chart
+            const ctx1 = document.getElementById('caseDistributionChart').getContext('2d');
+            new Chart(ctx1, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Active Contact', 'Payment Promised', 'Stalled', 'Disputed'],
+                    datasets: [{
+                        data: [450, 300, 150, 100],
+                        backgroundColor: [
+                            'rgba(0, 166, 81, 0.8)',
+                            'rgba(255, 184, 28, 0.8)',
+                            'rgba(227, 24, 55, 0.8)',
+                            'rgba(108, 117, 125, 0.8)'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#E0E0E0',
+                                padding: 15,
+                                font: { size: 12, family: 'Outfit' }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Recovery Trend Chart
+            const ctx2 = document.getElementById('recoveryTrendChart').getContext('2d');
+            new Chart(ctx2, {
+                type: 'line',
+                data: {
+                    labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                    datasets: [{
+                        label: 'Recovery Amount ($M)',
+                        data: [0.5, 0.8, 1.2, 2.8],
+                        borderColor: 'rgba(0, 166, 81, 1)',
+                        backgroundColor: 'rgba(0, 166, 81, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: '#6C757D',
+                                font: { family: 'JetBrains Mono' }
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.05)'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: '#6C757D',
+                                font: { family: 'Outfit' }
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.05)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Update Timestamp
+        function updateTimestamp() {
+            const now = new Date();
+            document.getElementById('timestamp').textContent = 
+                `Last updated: ${now.toLocaleTimeString()}`;
+        }
+        
+        // Refresh Dashboard
+        function refreshDashboard() {
+            updateTimestamp();
+            // Add refresh animation or data reload logic here
+            const btn = event.target;
+            btn.textContent = '⟳ Refreshing...';
+            setTimeout(() => {
+                btn.textContent = '↻ Refresh Data';
+            }, 1000);
+        }
+        
+        // Initialize Dashboard
+        document.addEventListener('DOMContentLoaded', () => {
+            populateAlerts();
+            populateDCAs();
+            populateCases();
+            createCharts();
+            updateTimestamp();
+            setInterval(updateTimestamp, 1000);
+        });
+    </script>
+</body>
+</html>

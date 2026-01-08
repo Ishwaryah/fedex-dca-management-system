@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FedEx DCA Management Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: #4E2A84;
+            --secondary: #FF6600;
+            --success: #00A651;
+            --warning: #FFB81C;
+            --danger: #E31837;
+            --dark: #1A1A2E;
+            --light: #F8F9FA;
+            --gray: #6C757D;
+            --gradient-start: #4E2A84;
+            --gradient-end: #8B4789;
+        }
+        
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: linear-gradient(135deg, #0F0F1E 0%, #1A1A2E 100%);
+            color: #E0E0E0;
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(78, 42, 132, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255, 102, 0, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+        
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding: 25px 30px;
+            background: rgba(26, 26, 46, 0.8);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .logo {
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -1px;
+        }
+        
+        .subtitle {
+            font-size: 14px;
+            color: var(--gray);
+            font-weight: 300;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .refresh-btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-family: 'Outfit', sans-serif;
+        }
+        
+        .refresh-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(78, 42, 132, 0.4);
+        }
+        
+        .timestamp {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--gray);
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+        }
+        
+        /* War Room - Top Metrics */
+        .war-room {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .metric-card {
+            background: rgba(26, 26, 46, 0.6);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--accent);
+            transition: width 0.3s;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+        }
+        
+        .metric-card:hover::before {
+            width: 8px;
+        }
+        
+        .metric-card.outstanding { --accent: var(--secondary); }
+        .metric-card.critical { --accent: var(--danger); }
+        .metric-card.recovered { --accent: var(--success); }
+        .metric-card.rate { --accent: var(--warning); }
+        
+        .metric-label {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--gray);
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+        
+        .metric-value {
+            font-size: 42px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 8px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        
+        .metric-change {
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .metric-change.positive { color: var(--success); }
+        .metric-change.negative { color: var(--danger); }
+        
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .panel {
+            background: rgba(26, 26, 46, 0.6);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+        
+        .panel-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: white;
+        }
+        
+        .view-all {
+            color: var(--secondary);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            transition: color 0.2s;
+        }
+        
+        .view-all:hover {
+            color: var(--primary);
+        }
+        
+        /* Alerts */
+        .alert-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .alert-item {
+            padding: 18px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            border-left: 4px solid var(--alert-color);
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        
+        .alert-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateX(5px);
+        }
+        
+        .alert-item.high { --alert-color: var(--danger); }
+        .alert-item.medium { --alert-color: var(--warning); }
+        .alert-item.low { --alert-color: var(--success); }
+        
+        .alert-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        
+        .alert-title {
+            font-weight: 600;
+            font-size: 14px;
+            color: white;
+        }
+        
+        .alert-time {
+            font-size: 12px;
+            color: var(--gray);
+            font-family: 'JetBrains Mono', monospace;
+        }
+        
+        .alert-details {
+            font-size: 13px;
+            color: var(--gray);
+        }
+        
+        /* DCA Leaderboard */
+        .dca-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .dca-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 18px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            transition: all 0.2s;
+        }
+        
+        .dca-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: scale(1.02);
+        }
+        
+        .dca-rank {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--rank-color);
+            width: 40px;
+            text-align: center;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        
+        .dca-item:nth-child(1) { --rank-color: #FFD700; }
+        .dca-item:nth-child(2) { --rank-color: #C0C0C0; }
+        .dca-item:nth-child(3) { --rank-color: #CD7F32; }
+        .dca-item:nth-child(n+4) { --rank-color: var(--gray); }
+        
+        .dca-info {
+            flex: 1;
+        }
+        
+        .dca-name {
+            font-weight: 600;
+            color: white;
+            margin-bottom: 4px;
+        }
+        
+        .dca-stats {
+            font-size: 12px;
+            color: var(--gray);
+        }
+        
+        .dca-score {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--success);
+            font-family: 'JetBrains Mono', monospace;
+        }
+        
+        /* Charts */
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 20px;
+        }
+        
+        /* Case Table */
+        .case-controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .search-box {
+            flex: 1;
+            min-width: 250px;
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: white;
+            font-family: 'Outfit', sans-serif;
+            font-size: 14px;
+        }
+        
+        .search-box::placeholder {
+            color: var(--gray);
+        }
+        
+        .filter-btn {
+            padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Outfit', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .filter-btn:hover, .filter-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+        
+        .case-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .case-table thead {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .case-table th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--gray);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .case-table td {
+            padding: 18px 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 14px;
+        }
+        
+        .case-table tbody tr {
+            transition: background 0.2s;
+            cursor: pointer;
+        }
+        
+        .case-table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .status-badge.active { background: rgba(0, 166, 81, 0.2); color: var(--success); }
+        .status-badge.promised { background: rgba(255, 184, 28, 0.2); color: var(--warning); }
+        .status-badge.stalled { background: rgba(227, 24, 55, 0.2); color: var(--danger); }
+        .status-badge.disputed { background: rgba(108, 117, 125, 0.2); color: var(--gray); }
+        
+        .priority-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+        }
+        
+        .priority-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--priority-color);
+        }
+        
+        .priority-badge.high { --priority-color: var(--danger); color: var(--danger); }
+        .priority-badge.medium { --priority-color: var(--warning); color: var(--warning); }
+        .priority-badge.low { --priority-color: var(--success); color: var(--success); }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        /* Animations */
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .metric-card, .panel, .alert-item, .dca-item {
+            animation: slideIn 0.5s ease-out forwards;
+        }
+        
+        .metric-card:nth-child(1) { animation-delay: 0.1s; }
+        .metric-card:nth-child(2) { animation-delay: 0.2s; }
+        .metric-card:nth-child(3) { animation-delay: 0.3s; }
+        .metric-card:nth-child(4) { animation-delay: 0.4s; }
+        
+        @media (max-width: 1200px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .war-room {
+                grid-template-columns: 1fr;
+            }
+            
+            header {
+                flex-direction: column;
+                gap: 20px;
+            }
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--gray);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo-section">
+                <div class="logo">FedEx DCA Control</div>
+                <div class="subtitle">Intelligent Debt Collection Management</div>
+            </div>
+            <div class="header-actions">
+                <div class="timestamp" id="timestamp">Last updated: --:--:--</div>
+                <button class="refresh-btn" onclick="refreshDashboard()">↻ Refresh Data</button>
+            </div>
+        </header>
+        
+        <!-- War Room Metrics -->
+        <div class="war-room" id="metricsCards">
+            <div class="loading">Loading metrics...</div>
+        </div>
+        
+        <!-- Dashboard Grid -->
+        <div class="dashboard-grid">
+            <!-- Alerts Panel -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">🔥 Critical Alerts</h2>
+                    <a href="#" class="view-all">View All →</a>
+                </div>
+                <div class="alert-list" id="alertList">
+                    <div class="loading">Loading alerts...</div>
+                </div>
+            </div>
+            
+            <!-- DCA Leaderboard -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">🏆 DCA Performance</h2>
+                    <a href="#" class="view-all">Details →</a>
+                </div>
+                <div class="dca-list" id="dcaList">
+                    <div class="loading">Loading DCA rankings...</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Charts Row -->
+        <div class="dashboard-grid">
+            <div class="panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">📊 Case Distribution</h2>
+                </div>
+                <div class="chart-container">
+                    <canvas id="caseDistributionChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">📈 Recovery Trend (30 Days)</h2>
+                </div>
+                <div class="chart-container">
+                    <canvas id="recoveryTrendChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Case Management Table -->
+        <div class="panel">
+            <div class="panel-header">
+                <h2 class="panel-title">📋 Active Cases</h2>
+                <span class="view-all" id="casesCount">Loading...</span>
+            </div>
+            
+            <div class="case-controls">
+                <input type="text" class="search-box" placeholder="🔍 Search by customer, case ID, or DCA..." id="searchBox">
+                <button class="filter-btn active" onclick="filterCases('all', this)">All</button>
+                <button class="filter-btn" onclick="filterCases('high', this)">High Priority</button>
+                <button class="filter-btn" onclick="filterCases('stalled', this)">Stalled</button>
+                <button class="filter-btn" onclick="filterCases('critical', this)">Critical</button>
+            </div>
+            
+            <table class="case-table">
+                <thead>
+                    <tr>
+                        <th>Case ID</th>
+                        <th>Customer</th>
+                        <th>Amount</th>
+                        <th>Days Overdue</th>
+                        <th>DCA</th>
+                        <th>Priority</th>
+                        <th>Status</th>
+                        <th>Last Contact</th>
+                    </tr>
+                </thead>
+                <tbody id="caseTableBody">
+                    <tr><td colspan="8" class="loading">Loading cases...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <script>
+        // API Configuration
+        const API_BASE_URL = 'http://localhost:5000/api';
+        
+        let allCases = [];
+        let currentFilter = 'all';
+        let distributionChart = null;
+        let trendChart = null;
+        
+        // Fetch Metrics
+        async function fetchMetrics() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/metrics`);
+                const data = await response.json();
+                
+                const metricsHTML = `
+                    <div class="metric-card outstanding">
+                        <div class="metric-label">Total Outstanding</div>
+                        <div class="metric-value">${data.total_outstanding_formatted}</div>
+                        <div class="metric-change ${data.outstanding_change.includes('+') ? 'positive' : 'negative'}">
+                            ${data.outstanding_change} from last month
+                        </div>
+                    </div>
+                    
+                    <div class="metric-card critical">
+                        <div class="metric-label">Critical Cases</div>
+                        <div class="metric-value">${data.critical_cases}</div>
+                        <div class="metric-change negative">↑ ${data.critical_change} cases require action</div>
+                    </div>
+                    
+                    <div class="metric-card recovered">
+                        <div class="metric-label">This Month Recovery</div>
+                        <div class="metric-value">${data.this_month_recovery_formatted}</div>
+                        <div class="metric-change positive">↑ ${data.recovery_change} vs last month</div>
+                    </div>
+                    
+                    <div class="metric-card rate">
+                        <div class="metric-label">Recovery Rate</div>
+                        <div class="metric-value">${data.recovery_rate}%</div>
+                        <div class="metric-change positive">↑ ${data.recovery_rate_change} improvement</div>
+                    </div>
+                `;
+                
+                document.getElementById('metricsCards').innerHTML = metricsHTML;
+            } catch (error) {
+                console.error('Error fetching metrics:', error);
+                document.getElementById('metricsCards').innerHTML = '<div class="loading">Error loading metrics. Is Flask running?</div>';
+            }
+        }
+        
+        // Fetch Alerts
+        async function fetchAlerts() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/alerts`);
+                const data = await response.json();
+                
+                const alertsHTML = data.alerts.map(alert => `
+                    <div class="alert-item ${alert.priority}">
+                        <div class="alert-header">
+                            <span class="alert-title">${alert.title}</span>
+                            <span class="alert-time">${alert.time}</span>
+                        </div>
+                        <div class="alert-details">${alert.details}</div>
+                    </div>
+                `).join('');
+                
+                document.getElementById('alertList').innerHTML = alertsHTML;
+            } catch (error) {
+                console.error('Error fetching alerts:', error);
+                document.getElementById('alertList').innerHTML = '<div class="loading">Error loading alerts</div>';
+            }
+        }
+        
+        // Fetch DCAs
+        async function fetchDCAs() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/dcas`);
+                const data = await response.json();
+                
+                const dcaHTML = data.dcas.map(dca => `
+                    <div class="dca-item">
+                        <div class="dca-rank">#${dca.rank}</div>
+                        <div class="dca-info">
+                            <div class="dca-name">${dca.name}</div>
+                            <div class="dca-stats">${dca.stats}</div>
+                        </div>
+                        <div class="dca-score">${dca.score}</div>
+                    </div>
+                `).join('');
+                
+                document.getElementById('dcaList').innerHTML = dcaHTML;
+            } catch (error) {
+                console.error('Error fetching DCAs:', error);
+                document.getElementById('dcaList').innerHTML = '<div class="loading">Error loading DCA rankings</div>';
+            }
+        }
+        
+        // Fetch Cases
+        async function fetchCases() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/cases?limit=50`);
+                const data = await response.json();
+                
+                allCases = data.cases;
+                document.getElementById('casesCount').textContent = `${data.total} total cases`;
+                renderCases(allCases);
+            } catch (error) {
+                console.error('Error fetching cases:', error);
+                document.getElementById('caseTableBody').innerHTML = '<tr><td colspan="8" class="loading">Error loading cases</td></tr>';
+            }
+        }
+        
+        // Render Cases
+        function renderCases(cases) {
+            const tbody = document.getElementById('caseTableBody');
+            
+            if (cases.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="loading">No cases match your filters</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = cases.map(c => `
+                <tr onclick="viewCaseDetail('${c.case_id}')">
+                    <td><strong>${c.case_id}</strong></td>
+                    <td>${c.customer_name}</td>
+                    <td><strong>${c.amount_formatted}</strong></td>
+                    <td>${c.days_overdue}</td>
+                    <td>${c.assigned_dca}</td>
+                    <td>
+                        <span class="priority-badge ${c.priority}">
+                            <span class="priority-dot"></span>
+                            ${c.priority.toUpperCase()}
+                        </span>
+                    </td>
+                    <td><span class="status-badge ${c.status.toLowerCase()}">${c.status}</span></td>
+                    <td>${c.last_contact}</td>
+                </tr>
+            `).join('');
+        }
+        
+        // Filter Cases
+        function filterCases(filter, button) {
+            // Update active button
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            if (button) button.classList.add('active');
+            
+            currentFilter = filter;
+            let filtered = allCases;
+            
+            if (filter === 'high') {
+                filtered = allCases.filter(c => c.priority === 'high');
+            } else if (filter === 'stalled') {
+                filtered = allCases.filter(c => c.status.toLowerCase() === 'stalled');
+            } else if (filter === 'critical') {
+                filtered = allCases.filter(c => c.days_overdue > 80);
+            }
+            
+            renderCases(filtered);
+        }
+        
+        // Search Functionality
+        document.addEventListener('DOMContentLoaded', () => {
+            const searchBox = document.getElementById('searchBox');
+            if (searchBox) {
+                searchBox.addEventListener('input', (e) => {
+                    const search = e.target.value.toLowerCase();
+                    const filtered = allCases.filter(c => 
+                        c.case_id.toLowerCase().includes(search) ||
+                        c.customer_name.toLowerCase().includes(search) ||
+                        c.assigned_dca.toLowerCase().includes(search)
+                    );
+                    renderCases(filtered);
+                });
+            }
+        });
+        
+        // View Case Detail
+        function viewCaseDetail(caseId) {
+            alert(`Case Detail View for ${caseId}\n\nIn Phase 2, this will open a detailed modal with:\n- Full case history\n- AI recommendations\n- Action buttons\n- Contact log`);
+        }
+        
+        // Create Charts
+        async function createCharts() {
+            try {
+                // Distribution Chart
+                const distResponse = await fetch(`${API_BASE_URL}/charts/distribution`);
+                const distData = await distResponse.json();
+                
+                const ctx1 = document.getElementById('caseDistributionChart').getContext('2d');
+                distributionChart = new Chart(ctx1, {
+                    type: 'doughnut',
+                    data: {
+                        labels: distData.labels,
+                        datasets: [{
+                            data: distData.data,
+                            backgroundColor: [
+                                'rgba(0, 166, 81, 0.8)',
+                                'rgba(255, 184, 28, 0.8)',
+                                'rgba(227, 24, 55, 0.8)',
+                                'rgba(108, 117, 125, 0.8)'
+                            ],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    color: '#E0E0E0',
+                                    padding: 15,
+                                    font: { size: 12, family: 'Outfit' }
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                // Recovery Trend Chart
+                const trendResponse = await fetch(`${API_BASE_URL}/charts/recovery-trend`);
+                const trendData = await trendResponse.json();
+                
+                const ctx2 = document.getElementById('recoveryTrendChart').getContext('2d');
+                trendChart = new Chart(ctx2, {
+                    type: 'line',
+                    data: {
+                        labels: trendData.labels,
+                        datasets: [{
+                            label: 'Recovery Amount ($M)',
+                            data: trendData.data,
+                            borderColor: 'rgba(0, 166, 81, 1)',
+                            backgroundColor: 'rgba(0, 166, 81, 0.1)',
+                            fill: true,
+                            tension: 0.4,
+                            borderWidth: 3
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    color: '#6C757D',
+                                    font: { family: 'JetBrains Mono' }
+                                },
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.05)'
+                                }
+                            },
+                            x: {
+                                ticks: {
+                                    color: '#6C757D',
+                                    font: { family: 'Outfit' }
+                                },
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.05)'
+                                }
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Error creating charts:', error);
+            }
+        }
+        
+        // Update Timestamp
+        function updateTimestamp() {
+            const now = new Date();
+            document.getElementById('timestamp').textContent = 
+                `Last updated: ${now.toLocaleTimeString()}`;
+        }
+        
+        // Refresh Dashboard
+        async function refreshDashboard() {
+            const btn = event.target;
+            btn.textContent = '⟳ Refreshing...';
+            btn.disabled = true;
+            
+            await Promise.all([
+                fetchMetrics(),
+                fetchAlerts(),
+                fetchDCAs(),
+                fetchCases()
+            ]);
+            
+            updateTimestamp();
+            
+            setTimeout(() => {
+                btn.textContent = '↻ Refresh Data';
+                btn.disabled = false;
+            }, 1000);
+        }
+        
+        // Initialize Dashboard
+        async function initDashboard() {
+            console.log('🚀 Initializing dashboard...');
+            console.log(`📡 API Base URL: ${API_BASE_URL}`);
+            
+            updateTimestamp();
+            setInterval(updateTimestamp, 1000);
+            
+            await Promise.all([
+                fetchMetrics(),
+                fetchAlerts(),
+                fetchDCAs(),
+                fetchCases(),
+                createCharts()
+            ]);
+            
+            console.log('✅ Dashboard initialized!');
+        }
+        
+        // Start when page loads
+        document.addEventListener('DOMContentLoaded', initDashboard);
+    </script>
+</body>
+</html>

@@ -1,5 +1,5 @@
 # QUICK START GUIDE
-## FedEx DCA Management System - Jan 9 Submission
+## FedEx DCA Management System 
 
 ###  5-Minute Setup (Windows/Mac/Linux)
 

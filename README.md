@@ -296,7 +296,7 @@ python app.py
 ##  Team
 
 - **Developer 1:** [ISHWARYA P]
-- **Developer 2:** [BALASUBRANIYAM M]
+- **Developer 2:** [BALASUBRAMANIYAN M]
 
 ---
 
